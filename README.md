@@ -35,9 +35,7 @@ npm run build && npm run preview
 
 The site is static (`dist/`). It needs `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` (for multithreaded WebAssembly) and a fallback to `index.html` for app routes.
 
-- **Vercel:** import the repository; `vercel.json` sets the build, headers and rewrites.
-- **Netlify:** build command `npm run build`, publish directory `dist`; `public/_headers` and `public/_redirects` are included in the build.
-- Cloudflare Pages is not supported: it caps files at 25 MB and the ONNX Runtime WebAssembly file is 28 MB.
+Hosted on **Vercel**: `vercel.json` sets the build command, output directory, headers and rewrites. Import the repository in Vercel, or run `npx vercel --prod` from the project folder.
 
 ## Checks
 

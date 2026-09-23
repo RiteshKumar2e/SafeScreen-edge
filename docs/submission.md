@@ -32,7 +32,7 @@ Drafts for the challenge intake form, a demo video script and a pre-submit check
 - Commands are shown as text, never run.
 
 **Deployment and accessibility.**
-- **Hosting:** a static site that deploys to Vercel or Netlify with the included configs. There is nothing to install, and it runs on any modern Chromium browser.
+- **Hosting:** a static site on Vercel (`vercel.json` included). There is nothing to install, and it runs on any modern Chromium browser.
 - **Accessibility:** keyboard shortcuts, a skip link, visible focus, reduced-motion support, light and dark themes, and a layout that works at phone width.
 
 **Honest limits.**
@@ -57,7 +57,7 @@ Record at 1920x1080. Run one real analysis before recording so the models are ca
 
 ## Pre-submit checklist
 
-- [ ] Deploy (Vercel or Netlify) and open the live URL in a fresh browser; run one upload analysis.
+- [ ] Deploy to Vercel and open the live URL in a fresh browser; run one upload analysis.
 - [ ] Set `VITE_SITE_URL`, and optionally `VITE_CONTACT_EMAIL` and `VITE_GITHUB_URL`, then redeploy.
 - [ ] Make the repository public (or share it with the judges), with README and `docs/`.
 - [ ] Record and upload the demo video.

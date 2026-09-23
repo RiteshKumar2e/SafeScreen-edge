@@ -57,7 +57,7 @@ function siteUrl(url: string | undefined): Plugin {
 /**
  * Cross-origin isolation lets ONNX Runtime Web use multithreaded WebAssembly
  * (SharedArrayBuffer). Every resource is same-origin, so nothing is blocked.
- * Hosting configs (vercel.json, public/_headers) send the same headers.
+ * vercel.json sends the same headers in production.
  */
 const ISOLATION_HEADERS = {
   'Cross-Origin-Opener-Policy': 'same-origin',

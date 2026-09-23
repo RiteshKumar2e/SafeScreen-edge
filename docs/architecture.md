@@ -55,7 +55,7 @@ Provider order at runtime: native host if connected, otherwise local browser inf
 2. Connected components on the thresholded maps give word boxes, which are grouped into lines (EasyOCR's `group_text_box` rules).
 3. Each line is cropped in grey, trimmed of leading blank space, scaled to 64 px high and read by the CRNN recognizer; greedy CTC decoding gives text and a confidence.
 
-Inference runs in a Web Worker (`ort.env.wasm.proxy`) on multithreaded WebAssembly, which needs cross-origin isolation (COOP/COEP headers are set by `vite preview`, `vercel.json` and `public/_headers`). WebGPU is opt-in in Settings because some drivers lose the device mid-run, which ONNX Runtime Web cannot recover from without a reload; a timed warm-up run checks the GPU first. Measured model times are stored with each run and shown on the AI Runtime page.
+Inference runs in a Web Worker (`ort.env.wasm.proxy`) on multithreaded WebAssembly, which needs cross-origin isolation (COOP/COEP headers are set by `vite preview` and `vercel.json`). WebGPU is opt-in in Settings because some drivers lose the device mid-run, which ONNX Runtime Web cannot recover from without a reload; a timed warm-up run checks the GPU first. Measured model times are stored with each run and shown on the AI Runtime page.
 
 ## Agents
 
