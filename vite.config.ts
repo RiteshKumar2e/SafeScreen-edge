@@ -54,9 +54,21 @@ function siteUrl(url: string | undefined): Plugin {
   };
 }
 
+/**
+ * Cross-origin isolation lets ONNX Runtime Web use multithreaded WebAssembly
+ * (SharedArrayBuffer). Every resource is same-origin, so nothing is blocked.
+ * Hosting configs (vercel.json, public/_headers) send the same headers.
+ */
+const ISOLATION_HEADERS = {
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+};
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   return {
+    server: { headers: ISOLATION_HEADERS },
+    preview: { headers: ISOLATION_HEADERS },
     plugins: [react(), csp(env.VITE_CLOUD_DEMO_ENDPOINT), siteUrl(env.VITE_SITE_URL)],
   };
 });

@@ -363,10 +363,10 @@ export function HowItWorks() {
 
 /* ---------- Technology ---------- */
 const STACK: { label: string; status: string; hw?: boolean }[] = [
-  { label: 'Snapdragon X Series', status: 'Target', hw: true },
+  { label: 'Snapdragon X Series HP PCs', status: 'Target', hw: true },
   { label: 'NPU acceleration', status: 'Via Windows host', hw: true },
-  { label: 'ONNX Runtime / Windows ML', status: 'Planned' },
-  { label: 'Optimized vision models', status: 'INT8 OCR built' },
+  { label: 'ONNX Runtime', status: 'Web build in use' },
+  { label: 'Qualcomm AI Hub EasyOCR', status: 'INT8, built' },
   { label: 'Local AI reasoning', status: 'Built' },
 ];
 
@@ -377,7 +377,7 @@ export function TechStack() {
         {STACK.map((x) => (
           <li key={x.label} className={x.hw ? 'hw' : ''}>
             <span>{x.label}</span>
-            <span className={`stack-status${/built/i.test(x.status) ? ' is-built' : ''}`}>{x.status}</span>
+            <span className={`stack-status${/built|in use/i.test(x.status) ? ' is-built' : ''}`}>{x.status}</span>
           </li>
         ))}
       </ol>
@@ -448,16 +448,16 @@ export function Performance() {
         <div>
           <span className="label">Model</span>
           <span className="val" style={{ fontSize: 18 }}>
-            Tesseract LSTM
+            EasyOCR
           </span>
-          <span className="sub">INT8 weights (best_int)</span>
+          <span className="sub">Qualcomm AI Hub, INT8 (w8a8)</span>
         </div>
       </div>
       <p className="perf-note">
         {runs.length
           ? 'Values above were measured in this browser on this device. They are not Snapdragon NPU benchmarks.'
           : 'Numbers appear after you analyze a real screen in the app. Nothing here is estimated.'}{' '}
-        <strong>Snapdragon NPU benchmark available after hardware profiling.</strong>
+        Qualcomm AI Hub publishes 13.45 ms for this EasyOCR detector on the Snapdragon X Elite NPU; that is Qualcomm's figure. <strong>SafeScreen's own NPU benchmark is available after hardware profiling.</strong>
       </p>
     </div>
   );

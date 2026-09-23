@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { MOD } from '../../app/AppLayout';
 import { Icon } from '../../components/Icon';
 import { ConfirmDialog, Toggle, useToast } from '../../components/ui';
-import type { ConfidenceLevel } from '../../inference/types';
+import type { ConfidenceLevel, OcrEngineId } from '../../inference/types';
 import { usePageMeta } from '../../lib/usePageMeta';
 import { useRuntime } from '../../runtime/useRuntime';
 import { resetAll, updateSettings, useStore, type Appearance } from '../../store/store';
@@ -107,8 +107,36 @@ export default function Settings() {
 
           <section id="ai" className="card card-pad" aria-labelledby="h-ai">
             <h2 id="h-ai">AI</h2>
-            <Row title="Model" desc="OCR model used for on-device text recognition.">
-              <span className="small">{probe?.host?.models[0]?.name ?? 'Tesseract 5 LSTM (eng, best_int)'}</span>
+            <Row title="Text recognition model" desc="Used for live capture and uploads. EasyOCR from Qualcomm AI Hub is the model the Snapdragon NPU build runs. Tesseract is faster on older CPUs." htmlFor="ocr-engine">
+              {probe?.host ? (
+                <span className="small">{probe.host.models[0]?.name ?? 'Windows host model'}</span>
+              ) : (
+                <select
+                  id="ocr-engine"
+                  className="select"
+                  style={{ width: 230 }}
+                  value={s.ocrEngine}
+                  onChange={(e) => updateSettings({ ocrEngine: e.target.value as OcrEngineId }, `Text recognition model set to ${e.target.value === 'tesseract' ? 'Tesseract LSTM' : 'Qualcomm AI Hub EasyOCR'}.`)}
+                >
+                  <option value="aihub-easyocr">EasyOCR · Qualcomm AI Hub (INT8)</option>
+                  <option value="tesseract">Tesseract LSTM (INT8)</option>
+                </select>
+              )}
+            </Row>
+            <Row
+              title="GPU acceleration"
+              desc={
+                s.ocrEngine === 'tesseract'
+                  ? 'Applies to the Qualcomm AI Hub model only.'
+                  : 'Run the Qualcomm AI Hub model on the GPU through WebGPU. Off by default because some graphics drivers stop responding; reload the page after changing it.'
+              }
+            >
+              <Toggle
+                checked={s.gpuAcceleration}
+                disabled={s.ocrEngine === 'tesseract'}
+                onChange={(v) => updateSettings({ gpuAcceleration: v }, `GPU acceleration turned ${v ? 'on' : 'off'}. Reload the page to apply it.`)}
+                label="GPU acceleration"
+              />
             </Row>
             <Row title="Inference mode" desc="Local is always tried first. Cloud fallback, if allowed, asks before each upload.">
               <span className={`chip ${s.localOnly || !s.cloudFallback ? 'chip-local' : 'chip-issue'}`}>{s.localOnly || !s.cloudFallback ? 'Local only' : 'Local, cloud fallback on approval'}</span>
@@ -173,9 +201,11 @@ export default function Settings() {
                 SafeScreen Edge {VERSION} · browser build
               </dd>
               <dt>Runtime</dt>
-              <dd>{probe?.host ? `Windows host ${probe.host.version}, ONNX Runtime` : 'Tesseract.js 7 (WebAssembly) and local agents'}</dd>
+              <dd>{probe?.host ? `Windows host ${probe.host.version}, ONNX Runtime` : 'ONNX Runtime Web 1.30 (WebAssembly, optional WebGPU), Tesseract.js 7, local agents'}</dd>
               <dt>Model information</dt>
-              <dd>Tesseract 5 LSTM, English, integer-quantized weights (tessdata best_int), served from this site</dd>
+              <dd>
+                EasyOCR from Qualcomm AI Hub (qai-hub-models v0.62.2, w8a8, Apache-2.0): CRAFT text detector and CRNN recognizer, INT8. Alternative: Tesseract 5 LSTM, English, integer-quantized weights. All served from this site.
+              </dd>
               <dt>Hardware information</dt>
               <dd>{probe ? probe.probes.filter((p) => ['cpu', 'cores', 'webgpu'].includes(p.id)).map((p) => `${p.label}: ${p.value}`).join(' · ') : 'Checking…'}</dd>
               <dt>Legal</dt>

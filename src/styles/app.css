@@ -2064,3 +2064,20 @@ a.stat-card:hover {
 .provider-status.is-on {
   color: var(--local);
 }
+
+.model-times {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.model-times > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.model-times dt {
+  font-weight: 600;
+}

@@ -1,0 +1,12 @@
+EasyOCR models (detector.int8.onnx, recognizer.int8.onnx)
+
+Source:   Qualcomm AI Hub Models, EasyOCR, release v0.62.2, ONNX w8a8 export
+          https://huggingface.co/qualcomm/EasyOCR
+          https://aihub.qualcomm.com/models/easyocr
+Upstream: EasyOCR by JaidedAI, https://github.com/JaidedAI/EasyOCR
+License:  Apache License 2.0
+
+Modification: the published export stores float32 weights and quantizes them
+inside the graph. scripts/fold-aihub-weights.py precomputes those constant
+QuantizeLinear nodes and stores the INT8 result, which reduces the files from
+98 MB to 25 MB. Model outputs are bit-identical to the published export.

@@ -137,7 +137,7 @@ export interface SensitiveMatch {
 export type StageId = 'preprocess' | 'ocr' | 'vision' | 'context' | 'agents' | 'evidence' | 'explain';
 
 /** Compute backend a stage actually ran on. */
-export type Backend = 'CPU · WebAssembly' | 'CPU · JavaScript' | 'CPU · Canvas 2D' | 'Prepared data' | 'External service' | 'Native host';
+export type Backend = 'CPU · WebAssembly' | 'GPU · WebGPU' | 'CPU · JavaScript' | 'CPU · Canvas 2D' | 'Prepared data' | 'External service' | 'Native host';
 
 export type StageStatus = 'pending' | 'running' | 'done' | 'skipped' | 'error';
 
@@ -178,6 +178,19 @@ export interface AnalysisReport {
   structure: ScreenStructure;
   /** Resource requests this page made while the analysis ran. */
   network: { requests: number; external: string[] };
+  /** Text recognition model that produced the text, with measured model times. Absent for demo data. */
+  ocrEngine?: OcrEngineInfo;
+}
+
+export type OcrEngineId = 'aihub-easyocr' | 'tesseract';
+
+export interface OcrEngineInfo {
+  id: OcrEngineId;
+  label: string;
+  source: string;
+  runtime: string;
+  /** Measured model inference times on this device, in ms. */
+  measured: { name: string; ms: number; runs: number }[];
 }
 
 export type ProviderId = 'local' | 'cloud-demo' | 'scenario' | 'native';

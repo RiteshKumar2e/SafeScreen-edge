@@ -5,3 +5,4 @@ public/ocr
 test-output
 scripts/.agents-check.mjs
 scripts/.dbg*
+public/ort

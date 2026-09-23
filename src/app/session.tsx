@@ -152,7 +152,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         const result = await provider.analyze(
           { imageUrl: f.url, source: f.source, scenarioId: f.scenarioId },
           (u) => !ctrl.signal.aborted && setStages((x) => ({ ...x, [u.id]: u })),
-          { signal: ctrl.signal, exclude: (text) => excludedMatch(text, s.excludedApps) },
+          { signal: ctrl.signal, exclude: (text) => excludedMatch(text, s.excludedApps), engine: s.ocrEngine, gpu: s.gpuAcceleration },
         );
         if (ctrl.signal.aborted) return null;
         setReport(result);

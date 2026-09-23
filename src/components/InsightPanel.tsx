@@ -5,7 +5,7 @@ import { StatusBadge } from './StatusBadge';
 import { Confidence, CopyCommand } from './ui';
 
 export const PROVIDER_LABEL: Record<AnalysisReport['providerId'], string> = {
-  local: 'On-device · browser OCR + local agents',
+  local: 'On-device · browser text model + local agents',
   scenario: 'Demo simulation · prepared transcript',
   'cloud-demo': 'Cloud fallback · external provider',
   native: 'On-device · SafeScreen Windows host',
@@ -202,7 +202,7 @@ export function InsightPanel({ report, onCopied, compact, actions, onFocusRegion
         <dl className="processing">
           <div>
             <dt>Processing</dt>
-            <dd>{PROVIDER_LABEL[report.providerId]}</dd>
+            <dd>{report.providerId === 'local' && report.ocrEngine ? `On-device · ${report.ocrEngine.label} + local agents` : PROVIDER_LABEL[report.providerId]}</dd>
           </div>
           <div>
             <dt>Screen data sent off device</dt>

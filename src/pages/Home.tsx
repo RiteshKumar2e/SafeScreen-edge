@@ -13,7 +13,7 @@ export default function Home() {
       <section className="hero" aria-labelledby="hero-title">
         <div className="container">
           <div className="hero-copy">
-            <span className="kicker">Designed for Windows on Snapdragon</span>
+            <span className="kicker">Designed for Snapdragon-powered HP PCs</span>
             <h1 id="hero-title" className="display h1">
               AI that understands your screen.
               <br />
@@ -96,7 +96,7 @@ export default function Home() {
               Built for AI at the edge.
             </h2>
             <p className="lead">
-              Screen understanding is a continuous, private workload, which makes it a good fit for the NPU in Snapdragon X Series PCs. Each layer is labeled with what runs today and what is planned.
+              Screen understanding is a continuous, private workload, which makes it a good fit for the NPU in Snapdragon X Series HP PCs. The text model comes from Qualcomm AI Hub, and each layer is labeled with what runs today and what is planned.
             </p>
           </div>
           <TechStack />

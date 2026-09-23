@@ -18,6 +18,8 @@ export default function LiveAnalysis() {
   usePageMeta('Live Analysis', 'Analyze your screen on this device: capture, detect UI elements and issues, and see explanations with evidence.');
   const s = useSession();
   const settings = useStore((x) => x.settings);
+  const engineName = settings.ocrEngine === 'tesseract' ? 'Tesseract OCR' : 'EasyOCR from Qualcomm AI Hub';
+  const slowCpu = (navigator.hardwareConcurrency || 4) < 8;
   const [params, setParams] = useSearchParams();
   const [source, setSource] = useState<Source>(() => (s.frame && !s.frame.scenarioId ? (s.frame.source === 'live' ? 'live' : 'upload') : 'demo'));
   const [focus, setFocus] = useState<string[]>([]);
@@ -216,7 +218,8 @@ export default function LiveAnalysis() {
             </span>
           ) : (
             <span>
-              <strong>Live Device Analysis.</strong> Text recognition and reasoning run on this device ({r?.backends.ocr ?? 'CPU · WebAssembly'}). The frame is not uploaded.
+              <strong>Live Device Analysis.</strong> {engineName} and the reasoning agents run on this device ({r?.backends.ocr ?? (settings.gpuAcceleration && settings.ocrEngine !== 'tesseract' ? 'GPU · WebGPU' : 'CPU · WebAssembly')}). The frame is not uploaded.{' '}
+              <Link to="/app/settings#ai">Change model</Link>
             </span>
           )}
           {scenario && (
@@ -341,7 +344,7 @@ export default function LiveAnalysis() {
                 />
                 {r && s.status === 'done' && r.regions.length > 0 && settings.showOverlay && (
                   <p className="tiny subtle">
-                    {r.regions.length} region{r.regions.length === 1 ? '' : 's'} · positions from {[...new Set(r.regions.map((x) => x.source.toLowerCase()))].join(' and ')}
+                    {r.regions.length} region{r.regions.length === 1 ? '' : 's'} · positions from {[...new Set(r.regions.map((x) => x.source.replace(/^OCR text position$/, 'recognized text positions').replace(/^(\w)/, (c) => c.toLowerCase())))].join(' and ')}
                   </p>
                 )}
               </div>
@@ -444,7 +447,11 @@ export default function LiveAnalysis() {
               </p>
               <Pipeline stages={s.stages} />
               {s.stages.ocr?.status === 'running' && !s.stages.ocr.detail?.includes('Reading') && (
-                <p className="tiny subtle">The first run loads the on-device OCR model (about 3 MB) from this site. Later runs start faster.</p>
+                <p className="tiny subtle">
+                  {settings.ocrEngine === 'tesseract'
+                    ? 'The first run loads the Tesseract model (about 3 MB) from this site. Later runs start faster.'
+                    : `The first run loads Qualcomm AI Hub EasyOCR (25 MB) and ONNX Runtime from this site. ${slowCpu ? `This device reports ${navigator.hardwareConcurrency} CPU threads, so the text detector can take 10 to 30 s here; on a Snapdragon NPU it is designed for milliseconds. Tesseract in Settings is faster on older CPUs.` : 'Later runs start faster.'}`}
+                </p>
               )}
               <div className="skeleton" style={{ height: 14, width: '70%' }} />
               <div className="skeleton" style={{ height: 14, width: '90%' }} />

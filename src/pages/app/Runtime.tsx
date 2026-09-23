@@ -3,6 +3,7 @@ import { Icon } from '../../components/Icon';
 import { STAGES } from '../../components/Pipeline';
 import { EmptyState } from '../../components/ui';
 import { usePageMeta } from '../../lib/usePageMeta';
+import { EASYOCR_MODEL } from '../../inference/aihub/easyocr';
 import { EXECUTION_PLAN } from '../../runtime/plan';
 import { useRuntime } from '../../runtime/useRuntime';
 import { useStore } from '../../store/store';
@@ -18,6 +19,13 @@ export default function Runtime() {
   usePageMeta('AI Runtime', 'Which compute backend runs each stage, what this device supports, and times measured on this device.');
   const { probe, loading, refresh } = useRuntime();
   const runs = useStore((s) => s.runs);
+  const engine = useStore((s) => s.settings.ocrEngine);
+  const gpu = useStore((s) => s.settings.gpuAcceleration);
+  const modelRuns = runs.flatMap((r) => r.models ?? []);
+  const modelMedians = [...new Set(modelRuns.map((m) => m.name))].map((name) => {
+    const rows = modelRuns.filter((m) => m.name === name && m.runs > 0);
+    return { name, ms: median(rows.map((m) => m.ms / m.runs)), n: rows.length };
+  });
   const host = probe?.host;
   const npu = probe?.activeBackend === 'npu';
 
@@ -49,18 +57,18 @@ export default function Runtime() {
         </div>
         <div className="card rt-card">
           <span className="label">Runtime</span>
-          <span className="v">{host ? 'ONNX Runtime (host)' : 'Tesseract.js · WebAssembly'}</span>
-          <span className="n">{host ? `Providers: ${host.executionProviders.join(', ')}` : 'Target: ONNX Runtime with QNN EP, or Windows ML'}</span>
+          <span className="v">{host ? 'ONNX Runtime (host)' : engine === 'tesseract' ? 'Tesseract.js · WebAssembly' : `ONNX Runtime Web · ${gpu ? 'WebGPU' : 'WebAssembly'}`}</span>
+          <span className="n">{host ? `Providers: ${host.executionProviders.join(', ')}` : 'Snapdragon target: ONNX Runtime with the QNN execution provider'}</span>
         </div>
         <div className="card rt-card">
           <span className="label">Model</span>
-          <span className="v">{host?.models[0]?.name ?? 'Tesseract 5 LSTM · English'}</span>
-          <span className="n">{host ? host.models.map((m) => `${m.name} on ${m.provider}`).join(' · ') : 'Served from this site; no third-party model download'}</span>
+          <span className="v">{host?.models[0]?.name ?? (engine === 'tesseract' ? 'Tesseract 5 LSTM · English' : 'EasyOCR · Qualcomm AI Hub')}</span>
+          <span className="n">{host ? host.models.map((m) => `${m.name} on ${m.provider}`).join(' · ') : engine === 'tesseract' ? 'Selected in Settings. Served from this site.' : 'CRAFT text detector + CRNN recognizer, qai-hub-models v0.62.2. Served from this site.'}</span>
         </div>
         <div className="card rt-card">
           <span className="label">Precision</span>
-          <span className="v">{host?.models[0]?.precision ?? 'INT8 weights'}</span>
-          <span className="n">{host ? 'As reported by the host' : 'tessdata best_int: integer-quantized LSTM. Target models: INT8 / FP16 via Qualcomm AI Hub'}</span>
+          <span className="v">{host?.models[0]?.precision ?? (engine === 'tesseract' ? 'INT8 weights' : 'INT8 (w8a8)')}</span>
+          <span className="n">{host ? 'As reported by the host' : engine === 'tesseract' ? 'tessdata best_int: integer-quantized LSTM' : 'INT8 weights and activations, as exported by Qualcomm AI Hub'}</span>
         </div>
         <div className="card rt-card">
           <span className="label">Status</span>
@@ -177,13 +185,27 @@ export default function Runtime() {
                 ))}
               </div>
               <p className="small">
-                <strong>End to end: {total} ms</strong> <span className="muted">on {runs[0].backend}, wall-clock in this browser. The first run includes loading the OCR model.</span>
+                <strong>End to end: {total} ms</strong> <span className="muted">on {runs[0].backend}, wall-clock in this browser. The first run includes loading the model.</span>
               </p>
+              {modelMedians.length > 0 && (
+                <dl className="model-times">
+                  {modelMedians.map((m) => (
+                    <div key={m.name}>
+                      <dt>{m.name}</dt>
+                      <dd>
+                        {m.ms === null ? 'Not timed' : `${Math.round(m.ms)} ms per run`} <span className="muted">median of {m.n}</span>
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
             </div>
           )}
           <div className="card-pad" style={{ borderTop: '1px solid var(--line)', display: 'grid', gap: 6 }}>
-            <span className="label">Snapdragon NPU benchmark</span>
-            <p className="small muted">Benchmark available after hardware profiling. NPU latency and power will be reported here from the Windows host once measured on Snapdragon X Series hardware.</p>
+            <span className="label">Snapdragon NPU reference</span>
+            <p className="small muted">
+              Qualcomm AI Hub publishes {EASYOCR_MODEL.published.detectorMs} ms for this EasyOCR detector (w8a8) on the {EASYOCR_MODEL.published.device} NPU through {EASYOCR_MODEL.published.runtime}. That figure is Qualcomm's, not measured by SafeScreen. SafeScreen's own NPU numbers will appear here from the Windows host once profiled on a Snapdragon HP PC.
+            </p>
           </div>
         </section>
       </div>
@@ -207,7 +229,7 @@ export default function Runtime() {
             <span>
               <strong>Browser, on-device</strong> <span className={`provider-status${host ? '' : ' is-on'}`}>{host ? 'Standby' : 'Active'}</span>
               <br />
-              <span className="small muted">Tesseract OCR in WebAssembly plus local agents. Used in this build.</span>
+              <span className="small muted">Qualcomm AI Hub EasyOCR in ONNX Runtime Web (or Tesseract, selectable in Settings) plus local agents. Used in this build.</span>
             </span>
           </li>
           <li>

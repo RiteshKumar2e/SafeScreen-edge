@@ -137,17 +137,33 @@ try {
     await page.goto(`${BASE}/app/live-analysis`, { waitUntil: 'networkidle' });
     const csp = await page.evaluate(() => document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.content ?? '');
     check(/connect-src 'self'/.test(csp), 'csp: production build restricts connections', csp.slice(0, 80));
+    check(await page.evaluate(() => crossOriginIsolated), 'aihub: page is cross-origin isolated (multithreaded WebAssembly)');
     await page.locator('input[type="file"]').setInputFiles(png);
     await page.getByRole('button', { name: 'Analyze', exact: true }).click();
-    const started = Date.now();
-    await waitInsight(page);
-    const t = await insight(page).innerText();
-    check(/declined|billing/i.test(t), 'ocr: real OCR reads the uploaded dashboard', `${Date.now() - started} ms in headless Chrome`);
+    let started = Date.now();
+    await page.locator('.insight-card .insight-title').waitFor({ timeout: 240000 });
+    let t = await insight(page).innerText();
+    const ocrStage = await page.evaluate(() => [...document.querySelectorAll('li, .stage')].map((e) => e.textContent).filter((x) => /Text recognition/.test(x) && x.length < 400).pop() ?? '');
+    check(/Qualcomm AI Hub EasyOCR/.test(ocrStage), 'aihub: Qualcomm AI Hub EasyOCR ran in the browser', ocrStage.replace(/^.*?Done/, '').slice(0, 120));
+    check(/Payment method declined/i.test(await page.locator('.recognized pre').textContent()), 'aihub: EasyOCR reads the uploaded dashboard', `${Date.now() - started} ms in headless Chrome`);
     check(/sent off device\s*None/i.test(t), 'ocr: provenance says nothing left the device');
     check((await page.locator('.region').count()) > 0, 'ocr: regions drawn from OCR positions');
     check(ext.length === 0, 'ocr: no third-party requests', ext.join(', '));
     await page.goto(`${BASE}/app/runtime`, { waitUntil: 'networkidle' });
     check(await page.getByText(/End to end: \d+ ms/).isVisible(), 'runtime: measured run appears');
+    check(await page.getByText('EasyOCR detector (CRAFT)').isVisible(), 'runtime: measured AI Hub model time appears');
+
+    // Tesseract stays available as the lighter engine.
+    await page.goto(`${BASE}/app/settings`, { waitUntil: 'networkidle' });
+    await page.locator('#ocr-engine').selectOption('tesseract');
+    await page.goto(`${BASE}/app/live-analysis`, { waitUntil: 'networkidle' });
+    await page.getByRole('radio', { name: 'Upload or paste' }).click();
+    await page.locator('input[type="file"]').setInputFiles(png);
+    await page.getByRole('button', { name: 'Analyze', exact: true }).click();
+    started = Date.now();
+    await waitInsight(page);
+    t = await insight(page).innerText();
+    check(/declined|billing/i.test(t), 'ocr: Tesseract engine reads the uploaded dashboard', `${Date.now() - started} ms in headless Chrome`);
 
     await page.goto(`${BASE}/app/live-analysis`, { waitUntil: 'networkidle' });
     await page.getByRole('radio', { name: 'Upload or paste' }).click();

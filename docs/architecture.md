@@ -1,6 +1,6 @@
 # Architecture
 
-SafeScreen Edge is a web app that runs its whole analysis pipeline on the device. It is built to run in a normal browser today and inside a Windows host (WebView2) on Snapdragon X Series PCs, where the model stages move to the NPU.
+SafeScreen Edge is a web app that runs its whole analysis pipeline on the device. Its text model is EasyOCR from Qualcomm AI Hub, run with ONNX Runtime Web. It runs in a normal browser today and is designed to run inside a Windows host (WebView2) on Snapdragon X Series HP PCs, where the same models move to the NPU.
 
 ## Layout
 
@@ -8,7 +8,8 @@ SafeScreen Edge is a web app that runs its whole analysis pipeline on the device
 src/
   inference/        AI engine (no React)
     preprocess.ts   frame scaling, dark-theme inversion
-    ocr.ts          Tesseract worker, returns text + line boxes
+    aihub/easyocr.ts Qualcomm AI Hub EasyOCR (CRAFT + CRNN) on ONNX Runtime Web
+    ocr.ts          Tesseract worker (lighter alternative), returns text + line boxes
     context.ts      URLs, sensitive-value detection and masking, UI hints
     structure.ts    navigation / actions / issues, region labeling
     agents/         error, risk, UI and general agents
@@ -28,7 +29,7 @@ src/
 ## Pipeline
 
 ```
-capture -> preprocess -> OCR (+ line boxes) -> UI detection -> context
+capture -> preprocess -> text detection + recognition (AI Hub EasyOCR) -> UI detection -> context
         -> agents -> evidence -> response + regions -> optional local history
 ```
 
@@ -44,7 +45,17 @@ interface InferenceProvider {
 
 `onStage` events drive the pipeline UI. Each stage is timed with `performance.now()` and tagged with the backend it ran on. The report also counts resource requests made during the run, so the UI can show whether anything left the page.
 
-Provider order at runtime: native host if connected, otherwise local browser OCR. Cloud fallback is never automatic; it is offered after a local failure only if the user allowed it, local-only mode is off, and an endpoint is configured.
+Provider order at runtime: native host if connected, otherwise local browser inference (Qualcomm AI Hub EasyOCR by default, Tesseract if chosen in Settings). Cloud fallback is never automatic; it is offered after a local failure only if the user allowed it, local-only mode is off, and an endpoint is configured.
+
+## Text model in the browser
+
+`aihub/easyocr.ts` loads two ONNX files from `/models/easyocr` into ONNX Runtime Web (files in `/ort`, never a CDN):
+
+1. The frame is letterboxed to 608x800 and the CRAFT detector returns character-region and link maps.
+2. Connected components on the thresholded maps give word boxes, which are grouped into lines (EasyOCR's `group_text_box` rules).
+3. Each line is cropped in grey, trimmed of leading blank space, scaled to 64 px high and read by the CRNN recognizer; greedy CTC decoding gives text and a confidence.
+
+Inference runs in a Web Worker (`ort.env.wasm.proxy`) on multithreaded WebAssembly, which needs cross-origin isolation (COOP/COEP headers are set by `vite preview`, `vercel.json` and `public/_headers`). WebGPU is opt-in in Settings because some drivers lose the device mid-run, which ONNX Runtime Web cannot recover from without a reload; a timed warm-up run checks the GPU first. Measured model times are stored with each run and shown on the AI Runtime page.
 
 ## Agents
 

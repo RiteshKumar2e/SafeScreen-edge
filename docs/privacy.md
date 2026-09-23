@@ -34,7 +34,7 @@ Browser build: a capture source whose track label matches an exclusion is refuse
 
 ## Network
 
-The production build sets a Content Security Policy with `connect-src 'self'` (plus the cloud endpoint origin if one is configured). OCR files are served from the same origin. `script-src` includes `'unsafe-eval'` because the Tesseract worker's bundled runtime calls `Function()`; that does not widen where data can be sent.
+The production build sets a Content Security Policy with `connect-src 'self'` (plus the cloud endpoint origin if one is configured). The Qualcomm AI Hub models, ONNX Runtime and the Tesseract files are all served from the same origin. `script-src` includes `'unsafe-eval'` because the Tesseract worker's bundled runtime calls `Function()`; that does not widen where data can be sent.
 
 ## Storage
 

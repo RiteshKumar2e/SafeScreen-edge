@@ -35,10 +35,10 @@ export const EXECUTION_PLAN: PlanRow[] = [
   },
   {
     stage: 'Text recognition (OCR)',
-    today: 'Tesseract 5 LSTM, integer-quantized weights (tessdata best_int), WebAssembly SIMD',
+    today: 'EasyOCR from Qualcomm AI Hub (CRAFT detector + CRNN recognizer, w8a8 INT8) in ONNX Runtime Web; Tesseract LSTM as an option',
     todayBackend: 'CPU',
     todayStatus: 'Built',
-    target: 'Text detection and recognition models, INT8, ONNX Runtime QNN execution provider',
+    target: 'The same Qualcomm AI Hub EasyOCR models on ONNX Runtime with the QNN execution provider',
     targetBackend: 'NPU',
   },
   {
@@ -75,12 +75,12 @@ export interface TechItem {
 /** Working in this build. */
 export const TECH_BUILT: TechItem[] = [
   {
-    name: 'Local inference',
-    what: 'OCR, context building and agents run on the device. The page is only allowed to connect to its own origin.',
+    name: 'Qualcomm AI Hub model',
+    what: 'EasyOCR from Qualcomm AI Hub (w8a8 export, CRAFT text detector and CRNN recognizer) runs in this build through ONNX Runtime Web, with INT8 weights served from this site.',
   },
   {
-    name: 'Quantized OCR model',
-    what: 'The OCR model ships with integer-quantized LSTM weights. A dedicated UI detector is planned.',
+    name: 'Local inference',
+    what: 'Text recognition, context building and agents run on the device. The page is only allowed to connect to its own origin.',
   },
   {
     name: 'Windows host bridge',
@@ -99,7 +99,7 @@ export const TECH_ROADMAP: TechItem[] = [
     what: 'An OS-managed path to the NPU, for devices where it is preferred.',
   },
   {
-    name: 'Qualcomm AI Hub',
-    what: 'Compiles, quantizes and profiles the OCR and UI models for Snapdragon X Series before release.',
+    name: 'Qualcomm AI Hub profiling',
+    what: 'Profile the shipped EasyOCR models on Snapdragon X Series HP PCs, and add a UI element detector from AI Hub.',
   },
 ];

@@ -6,7 +6,7 @@ import { EXECUTION_PLAN } from '../runtime/plan';
 export default function Technology() {
   usePageMeta(
     'Technology',
-    'How SafeScreen Edge runs: on-device OCR and UI understanding, local reasoning agents, and a hardware integration layer for ONNX Runtime and the Snapdragon NPU.',
+    'How SafeScreen Edge runs: Qualcomm AI Hub EasyOCR on the device, local reasoning agents, and a hardware integration layer for ONNX Runtime and the Snapdragon NPU on HP PCs.',
   );
   return (
     <>
@@ -63,7 +63,7 @@ export default function Technology() {
             <h2 id="t-plan" className="display h2">
               Stage by stage: what runs today, and where it is going.
             </h2>
-            <p className="lead">The browser build runs the whole pipeline on the device's CPU. The Windows host moves the model stages to the Snapdragon NPU.</p>
+            <p className="lead">The browser build runs the whole pipeline on the device, with EasyOCR from Qualcomm AI Hub on the CPU (or GPU through WebGPU). The Windows host runs the same models on the Snapdragon NPU.</p>
           </div>
           <div className="card table-wrap">
             <table className="table">
@@ -120,7 +120,7 @@ export default function Technology() {
             <div>
               <strong>Browser provider</strong> <span className="chip chip-local">In this build</span>
               <p className="small muted" style={{ marginTop: 4 }}>
-                Tesseract OCR compiled to WebAssembly with SIMD, integer-quantized LSTM weights, and the local agents. The model is served from this site.
+                EasyOCR from Qualcomm AI Hub (w8a8) in ONNX Runtime Web, on multithreaded WebAssembly or optionally WebGPU, plus the local agents. Tesseract is available as a lighter option. Models are served from this site.
               </p>
             </div>
             <div>

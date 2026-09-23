@@ -54,7 +54,7 @@ export default function Privacy() {
               <tbody>
                 <tr>
                   <th scope="row">Local (default)</th>
-                  <td>This device: browser OCR and agents, or the Windows host</td>
+                  <td>This device: Qualcomm AI Hub text model and agents in the browser, or the Windows host</td>
                   <td>
                     <span className="chip chip-local">No</span>
                   </td>

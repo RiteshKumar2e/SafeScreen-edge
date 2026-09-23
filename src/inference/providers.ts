@@ -1,6 +1,7 @@
 import { getScenario } from '../demo/scenarios';
 import { nativeHost } from '../runtime/nativeBridge';
 import { analyzeText, type TextAnalysis } from './analyze';
+import { EASYOCR_MODEL, EasyOcrError, recognizeEasyOcr } from './aihub/easyocr';
 import { recognize } from './ocr';
 import { preprocess } from './preprocess';
 import { labelRegions, layoutLines } from './structure';
@@ -9,6 +10,8 @@ import {
   type AnalysisReport,
   type Backend,
   type InferenceProvider,
+  type OcrEngineId,
+  type OcrEngineInfo,
   type ProviderId,
   type Region,
   type StageId,
@@ -29,6 +32,10 @@ export interface AnalyzeOptions {
   signal?: AbortSignal;
   /** Returns the name of an excluded app if the recognized text shows one. */
   exclude?: (text: string) => string | null;
+  /** Text recognition model for the local provider. Defaults to Qualcomm AI Hub EasyOCR. */
+  engine?: OcrEngineId;
+  /** Run the AI Hub model on the GPU through WebGPU instead of WebAssembly. */
+  gpu?: boolean;
 }
 
 function checkAbort(signal?: AbortSignal) {
@@ -121,7 +128,7 @@ function finish(
 export const localProvider: InferenceProvider<AnalyzeOptions> = {
   id: 'local',
   label: 'Local',
-  description: 'OCR and analysis run in this browser. Screen content is not uploaded.',
+  description: 'Text recognition (Qualcomm AI Hub EasyOCR or Tesseract) and analysis run in this browser. Screen content is not uploaded.',
   availability: () =>
     typeof WebAssembly === 'object' && typeof Worker === 'function'
       ? { ok: true }
@@ -136,23 +143,52 @@ export const localProvider: InferenceProvider<AnalyzeOptions> = {
     clock.emit({ id: 'preprocess', status: 'done', detail: `${width} × ${height} px${inverted ? ', dark theme inverted' : ''}` });
     checkAbort(signal);
 
-    clock.emit({ id: 'ocr', status: 'running', detail: 'Loading on-device OCR', progress: 0 }, 'CPU · WebAssembly');
-    let ocr: Awaited<ReturnType<typeof recognize>>;
-    try {
-      ocr = await recognize(canvas, (p, status) =>
-        clock.emit({ id: 'ocr', status: 'running', detail: status.includes('recogniz') ? 'Reading text' : 'Loading on-device OCR', progress: p }),
-      );
-    } catch (err) {
-      throw new AnalysisError('The on-device text recognizer could not start. Reload the page and try again, or load a demo scenario.', err);
+    const engine = opts.engine ?? 'aihub-easyocr';
+    let ocr: { text: string; lines: TextLine[] };
+    let ocrEngine: OcrEngineInfo;
+    if (engine === 'aihub-easyocr') {
+      clock.emit({ id: 'ocr', status: 'running', detail: 'Loading Qualcomm AI Hub EasyOCR', progress: 0 }, 'CPU · WebAssembly');
+      let r: Awaited<ReturnType<typeof recognizeEasyOcr>>;
+      try {
+        r = await recognizeEasyOcr(canvas, (p, status) => clock.emit({ id: 'ocr', status: 'running', detail: status, progress: p }), { signal, backend: opts.gpu ? 'webgpu' : 'wasm' });
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') throw err;
+        if (err instanceof EasyOcrError) throw new AnalysisError(err.message, err);
+        throw new AnalysisError('The Qualcomm AI Hub text model could not start in this browser. Switch the text recognition model to Tesseract in Settings, or load a demo scenario.', err);
+      }
+      const runtime = r.backend === 'webgpu' ? 'GPU · WebGPU' : 'CPU · WebAssembly';
+      clock.backends.ocr = runtime;
+      ocr = r;
+      ocrEngine = {
+        id: 'aihub-easyocr',
+        label: `${EASYOCR_MODEL.name} (${EASYOCR_MODEL.source}, INT8)`,
+        source: `${EASYOCR_MODEL.source}, ${EASYOCR_MODEL.release}`,
+        runtime: `ONNX Runtime Web, ${runtime}`,
+        measured: [
+          { name: 'EasyOCR detector (CRAFT)', ms: r.detectorMs, runs: 1 },
+          { name: 'EasyOCR recognizer (CRNN)', ms: r.recognizerMs, runs: r.lines.length },
+        ],
+      };
+      clock.emit({ id: 'ocr', status: 'done', detail: `Qualcomm AI Hub EasyOCR on ${runtime}: ${r.words} text regions, ${r.lines.length} lines (detector ${r.detectorMs} ms)` });
+    } else {
+      clock.emit({ id: 'ocr', status: 'running', detail: 'Loading on-device OCR', progress: 0 }, 'CPU · WebAssembly');
+      try {
+        ocr = await recognize(canvas, (p, status) =>
+          clock.emit({ id: 'ocr', status: 'running', detail: status.includes('recogniz') ? 'Reading text' : 'Loading on-device OCR', progress: p }),
+        );
+      } catch (err) {
+        throw new AnalysisError('The on-device text recognizer could not start. Reload the page and try again, or load a demo scenario.', err);
+      }
+      ocrEngine = { id: 'tesseract', label: 'Tesseract LSTM (INT8 weights)', source: 'tesseract.js, eng best_int', runtime: 'WebAssembly', measured: [] };
+      clock.emit({ id: 'ocr', status: 'done', detail: `Tesseract LSTM (WebAssembly), ${ocr.lines.length} lines` });
     }
     checkAbort(signal);
-    clock.emit({ id: 'ocr', status: 'done', detail: `Tesseract LSTM (WebAssembly), ${ocr.lines.length} lines` });
     const excluded = exclude?.(ocr.text);
     if (excluded) throw new ExcludedFrameError(excluded);
     clock.emit({ id: 'vision', status: 'skipped', detail: 'No vision model in this build. UI elements are inferred from text.' });
 
     const result = runAgents(ocr.text, [], clock);
-    return finish(result, ocr.lines, 'OCR text position', 'local', started, clock, net, { leftDevice: false, simulated: false });
+    return { ...finish(result, ocr.lines, 'OCR text position', 'local', started, clock, net, { leftDevice: false, simulated: false }), ocrEngine };
   },
 };
 

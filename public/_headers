@@ -1,0 +1,14 @@
+# Netlify / Cloudflare Pages. Cross-origin isolation enables multithreaded
+# WebAssembly for ONNX Runtime Web; every resource is same-origin.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+
+/models/*
+  Cache-Control: public, max-age=604800
+/ort/*
+  Cache-Control: public, max-age=604800
+/ocr/*
+  Cache-Control: public, max-age=604800

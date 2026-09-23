@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { AnalysisReport, ConfidenceLevel, InputSource, ProviderId, Severity, StageId } from '../inference/types';
+import type { AnalysisReport, ConfidenceLevel, InputSource, OcrEngineId, ProviderId, Severity, StageId } from '../inference/types';
 
 /**
  * App state that outlives a page: settings, local detection history, the
@@ -34,6 +34,10 @@ export interface Settings {
   confidenceThreshold: ConfidenceLevel;
   autoAnalyzeSeconds: 0 | 10 | 30 | 60;
   showOverlay: boolean;
+  /** Text recognition model used for live capture and uploads. */
+  ocrEngine: OcrEngineId;
+  /** Run the AI Hub model through WebGPU. Off by default; some GPU drivers hang. */
+  gpuAcceleration: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -54,6 +58,8 @@ export const DEFAULT_SETTINGS: Settings = {
   confidenceThreshold: 'Low',
   autoAnalyzeSeconds: 0,
   showOverlay: true,
+  ocrEngine: 'aihub-easyocr',
+  gpuAcceleration: false,
 };
 
 export type DetectionKind = 'issue' | 'security' | 'ui' | 'info';
@@ -98,6 +104,9 @@ export interface RunMetric {
   totalMs: number;
   stages: Partial<Record<StageId, number>>;
   width?: number;
+  /** Text recognition model and its measured per-model inference times. */
+  engine?: string;
+  models?: { name: string; ms: number; runs: number }[];
 }
 
 interface State {
@@ -208,6 +217,8 @@ export function recordDetection(r: AnalysisReport, meta: { source: InputSource; 
     backend: r.backends.ocr ?? 'Unknown',
     totalMs: r.elapsedMs,
     stages: r.timings,
+    engine: r.ocrEngine?.label,
+    models: r.ocrEngine?.measured,
   };
   const runs = r.providerId === 'scenario' ? state.runs : [run, ...state.runs].slice(0, 50);
   if (!meetsThreshold(a.confidence.level, state.settings.confidenceThreshold)) {

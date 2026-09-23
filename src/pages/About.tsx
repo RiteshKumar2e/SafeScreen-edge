@@ -54,7 +54,7 @@ export default function About() {
             <h2 id="claims" className="display h2">
               What we deliberately don't claim.
             </h2>
-            <p className="lead">SafeScreen Edge was built for the Snapdragon AI hackathon, with the goal of being a credible first version of a real product. That means being exact about what works today.</p>
+            <p className="lead">SafeScreen Edge was built for the Snapdragon AI challenge for Snapdragon-powered HP PCs, with the goal of being a credible first version of a real product. That means being exact about what works today.</p>
           </div>
           <ul className="not-claim">
             {NOT_CLAIMED.map(([t, d]) => (
