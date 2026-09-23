@@ -1,0 +1,7 @@
+node_modules
+dist
+public/ocr
+*.local
+test-output
+scripts/.agents-check.mjs
+scripts/.dbg*

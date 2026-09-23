@@ -1,0 +1,33 @@
+{
+  "name": "safescreen-edge",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/copy-ocr-assets.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/copy-ocr-assets.mjs",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "test:e2e": "node scripts/e2e.mjs",
+    "check:agents": "rolldown scripts/agents-check.ts --platform node --format esm -o scripts/.agents-check.mjs && node scripts/.agents-check.mjs",
+    "shots": "node scripts/shots.mjs",
+    "audit:buttons": "node scripts/button-audit.mjs"
+  },
+  "dependencies": {
+    "@tesseract.js-data/eng": "^1.0.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.4",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "playwright-core": "^1.63.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}
