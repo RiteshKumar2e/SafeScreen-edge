@@ -37,6 +37,16 @@ The site is static (`dist/`). It needs `Cross-Origin-Opener-Policy: same-origin`
 
 Hosted on **Vercel**: `vercel.json` sets the build command, output directory, headers and rewrites. Import the repository in Vercel, or run `npx vercel --prod` from the project folder.
 
+## Windows host (native, NPU on Snapdragon)
+
+```
+npm run build
+python -m pip install -r host/requirements.txt            # on Snapdragon: host/requirements-snapdragon.txt (ARM64 Python)
+python host/safescreen_host.py
+```
+
+It serves the app on `127.0.0.1:8787`, opens an Edge app window, and runs the Qualcomm AI Hub models with ONNX Runtime: QNN execution provider on the Hexagon NPU, CPU elsewhere. See `host/README.md`; `host/build-exe.ps1` builds `SafeScreenHost.exe`.
+
 ## Checks
 
 ```
@@ -45,7 +55,7 @@ npm run check:agents                  # agent output for all scenarios and edge 
 npm run build && npm run test:e2e     # browser suite against the production build (uses installed Chrome)
 ```
 
-The e2e suite runs the Qualcomm AI Hub model and Tesseract on an uploaded screenshot under the production Content Security Policy, and checks that no third-party request is made.
+The e2e suite runs the Qualcomm AI Hub model and Tesseract on an uploaded screenshot under the production Content Security Policy, checks that no third-party request is made, and starts the Windows host to run the same flow natively (skipped if Python with onnxruntime is not installed).
 
 ## Structure
 
@@ -64,6 +74,7 @@ EasyOCR models from [Qualcomm AI Hub](https://aihub.qualcomm.com/models/easyocr)
 
 ## Honest status
 
-- The browser build runs the Qualcomm AI Hub model on the CPU (WebAssembly), or on the GPU through WebGPU if you turn it on. NPU execution requires the SafeScreen Windows host (WebView2 + ONNX Runtime QNN), which is specified in `docs/snapdragon.md` and has a working bridge in the app, but is not included here.
+- The browser build runs the Qualcomm AI Hub model on the CPU (WebAssembly), or on the GPU through WebGPU if you turn it on.
+- The **SafeScreen Windows host** (`host/`) runs the same models natively with ONNX Runtime and selects the QNN execution provider for the Snapdragon NPU. It is tested on x64 with the CPU provider; the NPU path has not been run on Snapdragon hardware yet.
 - SafeScreen has not measured anything on Snapdragon hardware. The only NPU figure shown is Qualcomm's published one, labeled as such.
 - UI element detection is inferred from text in live mode; demo scenarios use simulated vision annotations.

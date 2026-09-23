@@ -10,8 +10,8 @@ SafeScreen Edge targets Snapdragon X Series HP PCs (for example HP OmniBook and 
 | ONNX Runtime Web (multithreaded WebAssembly; WebGPU opt-in) | Built |
 | Browser fallback: Tesseract LSTM, INT8 weights | Built, selectable in Settings |
 | Runtime probe (arch, WASM SIMD, WebGPU vendor, WebNN NPU context, host) | Built |
-| Provider interface + native provider + WebView2 bridge | Built |
-| SafeScreen Windows host (WebView2 + ONNX Runtime QNN EP) | Planned |
+| Provider interface + native provider + host bridge (HTTP and WebView2 transports) | Built |
+| SafeScreen Windows host (`host/`: local server, ONNX Runtime, QNN EP with CPU fallback) | Built. Tested on x64 with the CPU provider; not yet run on Snapdragon hardware |
 | SafeScreen's own NPU latency / power figures | Not measured. Qualcomm's published figure is shown, labeled as Qualcomm's |
 
 The app never reports NPU use unless the host says so.
@@ -33,7 +33,7 @@ Changes made for the web build (`scripts/fold-aihub-weights.py`):
 
 Pre- and post-processing follow Qualcomm's reference app (`qai_hub_models/models/easyocr/app.py`) and EasyOCR's `craft_utils`: letterbox to 608x800, threshold region and link maps, connected components, line grouping, height-64 crops, greedy CTC decoding. One addition: blank space before the first glyph is trimmed, because the recognizer reads a leading gap as "~".
 
-The Windows host is meant to load the **published static-shape export** with the QNN execution provider, since the NPU needs fixed shapes; the web copy uses the dynamic recognizer.
+The Windows host loads the **static-shape** models (608x800 detector, 64x800 recognizer) with the QNN execution provider, since the NPU needs fixed shapes; the web copy uses the dynamic recognizer.
 
 ### Measured in this build
 
@@ -59,9 +59,15 @@ This is a low-end x86 laptop CPU; the numbers show the model runs everywhere, no
 
 Windows ML is an alternative path to the NPU where the OS-managed runtime is preferred.
 
+## Windows host
+
+`host/safescreen_host.py` (see `host/README.md`) serves the built app on `127.0.0.1`, opens it in an Edge app window, and runs the models with ONNX Runtime. Provider order: `QNNExecutionProvider` (HTP backend, `htp_performance_mode=burst`, compiled context cached in `%LOCALAPPDATA%\SafeScreen\qnn-cache`), then `CPUExecutionProvider`. If QNN is installed but cannot take the model, the host reports why and uses the CPU. Frames stay in memory; the server refuses foreign `Host` headers (DNS rebinding) and cross-origin requests.
+
+On a Snapdragon PC it needs ARM64 Python and `onnxruntime-qnn`; `host/build-exe.ps1` packages it as `SafeScreenHost.exe`.
+
 ## Host bridge protocol
 
-The page runs inside WebView2 and talks to the host with `window.chrome.webview.postMessage`. Every request carries an `id`; the host replies with the same `id`.
+Two transports carry the same messages. **HTTP** (used by `host/`): the host marks the page with `<meta name="safescreen-host" content="http">`, and the app calls `GET /api/host` (describe) and `POST /api/analyze` with the image bytes. Requests are same-origin, so `connect-src 'self'` still holds. **WebView2**: the page talks to a shell with `window.chrome.webview.postMessage`; every request carries an `id` and the reply has the same `id`.
 
 Describe:
 

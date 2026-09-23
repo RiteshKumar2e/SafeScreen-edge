@@ -132,8 +132,8 @@ async function run(): Promise<RuntimeProbe> {
     id: 'host',
     label: 'SafeScreen Windows host',
     status: host ? 'active' : 'unavailable',
-    value: host ? `Connected · v${host.version} · ${host.activeProvider}` : 'Not connected (browser build)',
-    note: host ? `Providers: ${host.executionProviders.join(', ')}` : 'The Windows host runs ONNX Runtime with the QNN execution provider for the Snapdragon NPU.',
+    value: host ? `Connected · v${host.version} · ${host.activeProvider}` : 'Not connected (running in the browser)',
+    note: host ? `Providers: ${host.executionProviders.join(', ')}${host.notes?.length ? `. ${host.notes.join(' ')}` : ''}` : 'Start the SafeScreen host (host/ in the repository) to run the models natively, on the Snapdragon NPU where available.',
   });
 
   const armWindows = !!arch && arch.startsWith('arm') && (platform ?? '').toLowerCase().includes('windows');
@@ -141,7 +141,7 @@ async function run(): Promise<RuntimeProbe> {
 
   const hostNpu = host && /qnn/i.test(host.activeProvider);
   const activeBackend: RuntimeProbe['activeBackend'] = hostNpu ? 'npu' : host && /dml|directml|gpu/i.test(host.activeProvider) ? 'gpu' : 'cpu';
-  const activeLabel = hostNpu ? 'Snapdragon NPU · QNN' : host ? host.activeProvider : 'CPU · WebAssembly';
+  const activeLabel = hostNpu ? 'Snapdragon NPU · QNN' : host ? `${host.activeProvider.replace('ExecutionProvider', '')} · ONNX Runtime (host)` : 'CPU · WebAssembly';
 
   return { checkedAt: Date.now(), probes, arch, platform, cores, gpuVendor, gpuArchitecture, webnnNpu, host, snapdragonLikely, activeBackend, activeLabel };
 }

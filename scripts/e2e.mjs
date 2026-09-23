@@ -270,6 +270,58 @@ try {
     check(parseFloat(anim) < 0.01, 'reduced motion: region animation disabled', anim);
     await context.close();
   }
+
+  // 6. SafeScreen Windows host: native ONNX Runtime (QNN on Snapdragon, CPU elsewhere).
+  {
+    const py = process.platform === 'win32' ? 'python' : 'python3';
+    const deps = spawnSync(py, ['-c', 'import onnxruntime, numpy, PIL'], { encoding: 'utf8' });
+    if (deps.status !== 0) {
+      pass('host: skipped (Python with onnxruntime, numpy and Pillow not installed)');
+    } else {
+      const HOST_PORT = 8788;
+      const HOST = `http://127.0.0.1:${HOST_PORT}`;
+      const hostProc = spawn(py, ['host/safescreen_host.py', '--no-open', '--port', String(HOST_PORT), '--app', 'dist'], { stdio: 'pipe' });
+      try {
+        let info = null;
+        for (let i = 0; i < 60 && !info; i++) {
+          info = await fetch(`${HOST}/api/host`).then((r) => r.json()).catch(() => null);
+          if (!info) await new Promise((r) => setTimeout(r, 500));
+        }
+        check(!!info, 'host: starts and describes itself', info ? `${info.activeProvider} on ${info.device?.processor}` : 'no response');
+        const png = join(OUT, 'upload-dashboard.png');
+        const { request } = await import('node:http');
+        const status = (headers, method = 'GET', path = '/api/host') =>
+          new Promise((resolve) => {
+            const req = request({ host: '127.0.0.1', port: HOST_PORT, path, method, headers }, (res) => (res.resume(), resolve(res.statusCode)));
+            req.on('error', () => resolve(0));
+            req.end(method === 'POST' ? 'x' : undefined);
+          });
+        check((await status({ Host: `evil.example:${HOST_PORT}` })) === 421, 'host: refuses a foreign Host header (DNS rebinding)');
+        check((await status({ Origin: 'https://evil.example', 'Content-Type': 'image/png' }, 'POST', '/api/analyze')) === 403, 'host: refuses cross-origin analyze requests');
+
+        const { context, page, errors } = await newPage({ width: 1440, height: 900 });
+        const ext = [];
+        page.on('request', (r) => !r.url().startsWith(HOST) && !r.url().startsWith('blob:') && !r.url().startsWith('data:') && ext.push(r.url()));
+        await page.goto(`${HOST}/app/runtime`, { waitUntil: 'networkidle' });
+        check(await page.getByText(/Connected · v/).isVisible(), 'host: AI Runtime shows the connected host');
+        await page.goto(`${HOST}/app/live-analysis`, { waitUntil: 'networkidle' });
+        await page.getByRole('radio', { name: 'Upload or paste' }).click();
+        await page.locator('input[type="file"]').setInputFiles(png);
+        await page.getByRole('button', { name: 'Analyze', exact: true }).click();
+        const started = Date.now();
+        await page.locator('.insight-card .insight-title').waitFor({ timeout: 180000 });
+        const stage = await page.evaluate(() => [...document.querySelectorAll('li, .stage')].map((e) => e.textContent).filter((x) => /Text recognition/.test(x) && x.length < 400).pop() ?? '');
+        check(/Qualcomm AI Hub.*ExecutionProvider/.test(stage), 'host: analysis ran in the native host with the AI Hub model', stage.replace(/^.*?Done/, '').slice(0, 120));
+        check(/Payment method declined/i.test(await page.locator('.recognized pre').textContent()), 'host: native EasyOCR reads the dashboard', `${Date.now() - started} ms`);
+        check(ext.length === 0, 'host: no requests leave this PC', ext.join(', '));
+        check(errors.length === 0, 'host: no console errors', errors.join(' | '));
+        await context.close();
+      } finally {
+        if (process.platform === 'win32') spawnSync('taskkill', ['/pid', String(hostProc.pid), '/f', '/t']);
+        else hostProc.kill();
+      }
+    }
+  }
 } catch (err) {
   fail('e2e run crashed', String(err?.stack ?? err));
 } finally {

@@ -204,7 +204,7 @@ export default function Runtime() {
           <div className="card-pad" style={{ borderTop: '1px solid var(--line)', display: 'grid', gap: 6 }}>
             <span className="label">Snapdragon NPU reference</span>
             <p className="small muted">
-              Qualcomm AI Hub publishes {EASYOCR_MODEL.published.detectorMs} ms for this EasyOCR detector (w8a8) on the {EASYOCR_MODEL.published.device} NPU through {EASYOCR_MODEL.published.runtime}. That figure is Qualcomm's, not measured by SafeScreen. SafeScreen's own NPU numbers will appear here from the Windows host once profiled on a Snapdragon HP PC.
+              Qualcomm AI Hub publishes {EASYOCR_MODEL.published.detectorMs} ms for this EasyOCR detector (w8a8) on the {EASYOCR_MODEL.published.device} NPU through {EASYOCR_MODEL.published.runtime}. That figure is Qualcomm's, not measured by SafeScreen. When the SafeScreen host runs on a Snapdragon PC, its own NPU times appear above as host measurements.
             </p>
           </div>
         </section>
@@ -222,7 +222,7 @@ export default function Runtime() {
             <span>
               <strong>Windows host</strong> <span className={`provider-status${host ? ' is-on' : ''}`}>{host ? 'Connected' : 'Not connected'}</span>
               <br />
-              <span className="small muted">WebView2 shell that captures with Windows.Graphics.Capture and runs ONNX Runtime with the QNN execution provider on the Snapdragon NPU.</span>
+              <span className="small muted">{host ? `${host.device.processor ?? 'This PC'}: ${host.models.map((m) => `${m.name} on ${m.provider}`).join(', ')}.` : 'Local host app (host/ in the repository) that runs the Qualcomm AI Hub models with ONNX Runtime: QNN execution provider on the Snapdragon NPU, CPU elsewhere.'}</span>
             </span>
           </li>
           <li>

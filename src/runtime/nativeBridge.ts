@@ -3,11 +3,15 @@ import type { TextLine, UiElement } from '../inference/types';
 /**
  * Bridge to the SafeScreen Windows host.
  *
- * The web app is designed to run inside a WebView2 shell on Windows on
- * Snapdragon. That shell owns screen capture (Windows.Graphics.Capture) and
- * runs models through ONNX Runtime, choosing the QNN execution provider for
- * the Hexagon NPU when it is available. The page talks to it with
- * chrome.webview messages. The protocol is documented in docs/snapdragon.md.
+ * The host runs the Qualcomm AI Hub models natively through ONNX Runtime,
+ * choosing the QNN execution provider for the Hexagon NPU on Snapdragon PCs.
+ * Two transports carry the same describe / analyze protocol
+ * (docs/snapdragon.md):
+ *
+ *   http     host/safescreen_host.py serves this app on 127.0.0.1 and marks
+ *            the page with <meta name="safescreen-host" content="http">.
+ *            Requests are same-origin, so connect-src 'self' still holds.
+ *   webview  a WebView2 shell, using chrome.webview messages.
  *
  * In a normal browser there is no host, every function here reports that
  * honestly, and the app uses its in-browser providers instead.
@@ -21,6 +25,10 @@ export interface HostInfo {
   activeProvider: string;
   device: { processor?: string; npu?: string; os?: string };
   models: { name: string; precision: string; provider: string }[];
+  /** Why the host fell back from the NPU, if it did. */
+  notes?: string[];
+  /** Time to load the models, in ms. */
+  loadMs?: number;
 }
 
 export interface HostAnalysis {
@@ -42,6 +50,17 @@ interface WebView {
 function webview(): WebView | null {
   const w = (window as unknown as { chrome?: { webview?: WebView } }).chrome?.webview;
   return w ?? null;
+}
+
+/** True when the page was served by the local SafeScreen host. */
+function httpHost(): boolean {
+  return typeof document !== 'undefined' && !!document.querySelector('meta[name="safescreen-host"][content="http"]');
+}
+
+async function httpJson<T>(res: Response): Promise<T> {
+  const body = (await res.json().catch(() => ({}))) as T & { error?: string };
+  if (!res.ok) throw new Error(body.error ?? `Host error ${res.status}`);
+  return body;
 }
 
 let info: HostInfo | null = null;
@@ -81,11 +100,16 @@ function request<T>(type: string, payload: Record<string, unknown>, timeoutMs: n
 /** Asks the host to identify itself. Resolves to null in a normal browser. */
 export function connectNativeHost(): Promise<HostInfo | null> {
   if (!probed) {
-    probed = webview()
-      ? request<HostInfo>('safescreen.describe', {}, 1500)
+    probed = httpHost()
+      ? fetch('/api/host', { cache: 'no-store' })
+          .then((r) => httpJson<HostInfo>(r))
           .then((i) => (info = i))
           .catch(() => null)
-      : Promise.resolve(null);
+      : webview()
+        ? request<HostInfo>('safescreen.describe', {}, 1500)
+            .then((i) => (info = i))
+            .catch(() => null)
+        : Promise.resolve(null);
   }
   return probed;
 }
@@ -96,10 +120,14 @@ export function nativeHost() {
   return {
     info,
     async analyze(frame: Blob, signal?: AbortSignal): Promise<HostAnalysis> {
+      if (httpHost()) {
+        const res = await fetch('/api/analyze', { method: 'POST', body: frame, headers: { 'Content-Type': frame.type || 'image/png' }, signal });
+        return httpJson<HostAnalysis>(res);
+      }
       const bytes = new Uint8Array(await frame.arrayBuffer());
       let bin = '';
       for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-      return request<HostAnalysis>('safescreen.analyze', { image: btoa(bin), mime: frame.type }, 30000, signal);
+      return request<HostAnalysis>('safescreen.analyze', { image: btoa(bin), mime: frame.type }, 120000, signal);
     },
   };
 }

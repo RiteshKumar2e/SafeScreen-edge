@@ -395,7 +395,7 @@ export function TechStack() {
         </section>
         <section aria-labelledby="tech-roadmap">
           <h3 id="tech-roadmap" className="tech-group-title">Snapdragon roadmap</h3>
-          <p className="tech-group-note">Ships with the SafeScreen Windows host. Not used by this web build yet.</p>
+          <p className="tech-group-note">These need Snapdragon hardware to verify. Nothing here is claimed as measured.</p>
           <dl className="rows rows-tight">
             {TECH_ROADMAP.map((t) => (
               <div key={t.name}>
@@ -443,7 +443,7 @@ export function Performance() {
         <div>
           <span className="label">Power mode</span>
           <span className="val none">Not measured</span>
-          <span className="sub">Requires the Windows host</span>
+          <span className="sub">Needs profiling on Snapdragon hardware</span>
         </div>
         <div>
           <span className="label">Model</span>

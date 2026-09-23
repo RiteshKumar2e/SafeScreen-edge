@@ -1,0 +1,6 @@
+# SafeScreen host on a Snapdragon X Series PC (Windows on ARM64).
+# Needs 64-bit ARM Python (3.11 or 3.12, ARM64 installer from python.org).
+# onnxruntime-qnn bundles the QNN HTP libraries for the Hexagon NPU.
+numpy>=1.26
+pillow>=10
+onnxruntime-qnn>=1.20

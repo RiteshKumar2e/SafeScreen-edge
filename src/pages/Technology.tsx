@@ -111,10 +111,10 @@ export default function Technology() {
           </div>
           <div className="card card-pad" style={{ display: 'grid', gap: 14 }}>
             <div>
-              <strong>Windows host provider</strong> <span className="chip chip-accent">Adapter built</span>
+              <strong>Windows host provider</strong> <span className="chip chip-local">Built</span>
               <p className="small muted" style={{ marginTop: 4 }}>
-                The web app runs inside a WebView2 shell. The shell captures with Windows.Graphics.Capture and runs OCR and UI models through ONNX Runtime, selecting the QNN execution provider for the
-                Hexagon NPU. The page talks to it over chrome.webview messages.
+                A local host app serves SafeScreen on 127.0.0.1 and runs the Qualcomm AI Hub models natively with ONNX Runtime, selecting the QNN execution provider for the Hexagon NPU on Snapdragon PCs and the
+                CPU elsewhere. The page talks to it over same-origin requests. Tested on x64 with the CPU provider; the NPU path has not yet been run on Snapdragon hardware.
               </p>
             </div>
             <div>

@@ -83,23 +83,23 @@ export const TECH_BUILT: TechItem[] = [
     what: 'Text recognition, context building and agents run on the device. The page is only allowed to connect to its own origin.',
   },
   {
-    name: 'Windows host bridge',
-    what: 'The bridge and runtime probe are built. The app reports NPU use only when the host confirms it.',
+    name: 'SafeScreen Windows host',
+    what: 'A local host app runs the same AI Hub models natively with ONNX Runtime, choosing the QNN execution provider for the NPU. The app reports NPU use only when the host confirms it.',
   },
 ];
 
-/** Ships with the SafeScreen Windows host. Not used by this build. */
+/** Next steps on Snapdragon hardware. */
 export const TECH_ROADMAP: TechItem[] = [
   {
-    name: 'ONNX Runtime with QNN',
-    what: 'Loads the models and selects the QNN execution provider when a Snapdragon NPU is present.',
+    name: 'NPU validation with QNN',
+    what: 'Run the host with onnxruntime-qnn on a Snapdragon HP PC, confirm every operator runs on the Hexagon NPU, and publish measured latency and power.',
   },
   {
     name: 'Windows ML',
     what: 'An OS-managed path to the NPU, for devices where it is preferred.',
   },
   {
-    name: 'Qualcomm AI Hub profiling',
-    what: 'Profile the shipped EasyOCR models on Snapdragon X Series HP PCs, and add a UI element detector from AI Hub.',
+    name: 'UI detector from Qualcomm AI Hub',
+    what: 'Add a quantized UI element detector (fields, buttons, dialogs) alongside EasyOCR, compiled and profiled with AI Hub.',
   },
 ];

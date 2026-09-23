@@ -1,0 +1,4 @@
+# SafeScreen host on any Windows PC (CPU execution provider).
+numpy>=1.26
+pillow>=10
+onnxruntime>=1.20

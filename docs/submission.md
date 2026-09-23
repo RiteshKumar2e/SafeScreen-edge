@@ -17,12 +17,13 @@ Drafts for the challenge intake form, a demo video script and a pre-submit check
 - Tesseract 5 LSTM (INT8 weights) as a lighter alternative.
 - Local rule-based agents (error, risk, UI) that produce explanations with evidence and confidence.
 
-**Snapdragon and HP.** Screen understanding is continuous and private, which is the NPU's job. The same Qualcomm AI Hub models are designed to run through ONNX Runtime with the QNN execution provider in a Windows host on Snapdragon X Series HP PCs. Qualcomm publishes 13.45 ms for this detector on the Snapdragon X Elite NPU. The web app already has the host bridge, a runtime probe that reports the real backend, and an AI Runtime page that shows only measured values.
+**Snapdragon and HP.** Screen understanding is continuous and private, which is the NPU's job. The SafeScreen Windows host runs the same Qualcomm AI Hub models natively through ONNX Runtime and selects the QNN execution provider for the Hexagon NPU on Snapdragon X Series HP PCs (CPU elsewhere). Qualcomm publishes 13.45 ms for this detector on the Snapdragon X Elite NPU. The web app already has the host bridge, a runtime probe that reports the real backend, and an AI Runtime page that shows only measured values.
 
 **Technical implementation.**
 - Ported Qualcomm's EasyOCR pre- and post-processing to TypeScript: letterboxing, CRAFT connected components, line grouping and CTC decoding.
 - Stored the weights as INT8, cutting the models from 98 MB to 25 MB with bit-identical outputs, and made the recognizer width dynamic for short lines.
 - Inference runs in a Web Worker on multithreaded WebAssembly, with WebGPU opt-in.
+- A Windows host (`host/`) serves the app on 127.0.0.1 and runs the models natively with ONNX Runtime (QNN on the NPU, CPU fallback), guarded against DNS rebinding and cross-origin requests.
 - Every stage is timed and tagged with the backend it ran on.
 - An end-to-end browser suite (306 checks) runs the AI Hub model on an uploaded screenshot under the production security policy and checks that no third-party request is made.
 
@@ -36,7 +37,7 @@ Drafts for the challenge intake form, a demo video script and a pre-submit check
 - **Accessibility:** keyboard shortcuts, a skip link, visible focus, reduced-motion support, light and dark themes, and a layout that works at phone width.
 
 **Honest limits.**
-- The NPU path needs the Windows host, which is specified but not built yet.
+- The Windows host is built and tested on x64 (CPU provider); its QNN/NPU path has not been run on Snapdragon hardware yet.
 - SafeScreen has not measured anything on Snapdragon hardware.
 - In the browser on a low-end x86 CPU, one screenshot takes 25 to 50 s.
 

@@ -228,7 +228,7 @@ export const nativeProvider: InferenceProvider<AnalyzeOptions> = {
   id: 'native',
   label: 'Native host',
   description: 'OCR and vision run in the SafeScreen Windows host on this device.',
-  availability: () => (nativeHost() ? { ok: true } : { ok: false, reason: 'The SafeScreen Windows host is not connected. This is the browser build.' }),
+  availability: () => (nativeHost() ? { ok: true } : { ok: false, reason: 'The SafeScreen Windows host is not connected. Analysis runs in the browser.' }),
   async analyze(input, onStage, opts = {}) {
     const host = nativeHost();
     if (!host) throw new AnalysisError('The SafeScreen Windows host is not connected.');
@@ -240,12 +240,23 @@ export const nativeProvider: InferenceProvider<AnalyzeOptions> = {
     clock.emit({ id: 'preprocess', status: 'done', detail: `${Math.round(blob.size / 1024)} KB frame` });
     clock.emit({ id: 'ocr', status: 'running', detail: 'Running in native host' }, 'Native host');
     const res = await host.analyze(blob, opts.signal);
-    clock.emit({ id: 'ocr', status: 'done', detail: `${res.ocrModel} on ${res.executionProvider}` });
+    clock.emit({ id: 'ocr', status: 'done', detail: `${res.ocrModel} on ${res.executionProvider}: ${res.lines.length} lines${typeof res.timings.detector === 'number' ? ` (detector ${Math.round(res.timings.detector)} ms)` : ''}` });
     const excluded = opts.exclude?.(res.text);
     if (excluded) throw new ExcludedFrameError(excluded);
     clock.emit({ id: 'vision', status: res.uiElements.length ? 'done' : 'skipped', detail: res.uiElements.length ? `${res.uiElements.length} elements on ${res.executionProvider}` : 'Not returned by host' }, 'Native host');
     const result = runAgents(res.text, res.uiElements, clock);
-    return finish(result, res.lines, res.uiElements.length ? 'Simulated vision annotation' : 'OCR text position', 'native', started, clock, net, { leftDevice: false, simulated: false });
+    const t = res.timings;
+    const ocrEngine: OcrEngineInfo = {
+      id: 'aihub-easyocr',
+      label: `${res.ocrModel} on ${res.executionProvider.replace('ExecutionProvider', '')}`,
+      source: 'Qualcomm AI Hub, via the SafeScreen host',
+      runtime: `ONNX Runtime, ${res.executionProvider}`,
+      measured: [
+        ...(typeof t.detector === 'number' ? [{ name: `EasyOCR detector (CRAFT), host ${res.executionProvider.replace('ExecutionProvider', '')}`, ms: t.detector, runs: 1 }] : []),
+        ...(typeof t.recognizer === 'number' && t.recognizerRuns ? [{ name: `EasyOCR recognizer (CRNN), host ${res.executionProvider.replace('ExecutionProvider', '')}`, ms: t.recognizer, runs: t.recognizerRuns }] : []),
+      ],
+    };
+    return { ...finish(result, res.lines, res.uiElements.length ? 'Simulated vision annotation' : 'OCR text position', 'native', started, clock, net, { leftDevice: false, simulated: false }), ocrEngine };
   },
 };
 

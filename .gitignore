@@ -6,3 +6,9 @@ test-output
 scripts/.agents-check.mjs
 scripts/.dbg*
 public/ort
+
+# Windows host build output
+host/build
+host/dist
+host/__pycache__
+host/.cache
