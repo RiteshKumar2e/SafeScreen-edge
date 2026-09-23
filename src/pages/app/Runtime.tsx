@@ -172,7 +172,7 @@ export default function Runtime() {
                     <span className="track">
                       <span className="fill" style={{ width: `${((s.ms ?? 0) / maxMs) * 100}%` }} />
                     </span>
-                    <span className="ms">{s.ms === null ? '—' : `${s.ms < 1 ? '<1' : Math.round(s.ms)} ms`}</span>
+                    <span className="ms">{s.ms === null ? 'Not timed' : `${s.ms < 1 ? '<1' : Math.round(s.ms)} ms`}</span>
                   </div>
                 ))}
               </div>
@@ -198,21 +198,21 @@ export default function Runtime() {
         <ol className="steps-list">
           <li>
             <span>
-              <strong>Windows host</strong> — {host ? <span className="chip chip-local">Connected</span> : <span className="chip">Not connected</span>}
+              <strong>Windows host</strong> <span className={`provider-status${host ? ' is-on' : ''}`}>{host ? 'Connected' : 'Not connected'}</span>
               <br />
               <span className="small muted">WebView2 shell that captures with Windows.Graphics.Capture and runs ONNX Runtime with the QNN execution provider on the Snapdragon NPU.</span>
             </span>
           </li>
           <li>
             <span>
-              <strong>Browser, on-device</strong> — <span className="chip chip-local">Active</span>
+              <strong>Browser, on-device</strong> <span className={`provider-status${host ? '' : ' is-on'}`}>{host ? 'Standby' : 'Active'}</span>
               <br />
               <span className="small muted">Tesseract OCR in WebAssembly plus local agents. Used in this build.</span>
             </span>
           </li>
           <li>
             <span>
-              <strong>Cloud fallback</strong> — <span className="chip">Off by default</span>
+              <strong>Cloud fallback</strong> <span className="provider-status">Off by default</span>
               <br />
               <span className="small muted">Only when allowed in Privacy, only after local analysis fails, and only with your approval for that frame.</span>
             </span>

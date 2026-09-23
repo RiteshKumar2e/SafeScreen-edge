@@ -69,39 +69,37 @@ export const EXECUTION_PLAN: PlanRow[] = [
 
 export interface TechItem {
   name: string;
-  status: 'In this build' | 'Planned integration' | 'Adapter built';
   what: string;
 }
 
-export const TECH: TechItem[] = [
+/** Working in this build. */
+export const TECH_BUILT: TechItem[] = [
   {
     name: 'Local inference',
-    status: 'In this build',
     what: 'OCR, context building and agents run on the device. The page is only allowed to connect to its own origin.',
   },
   {
-    name: 'Optimized vision models',
-    status: 'In this build',
+    name: 'Quantized OCR model',
     what: 'The OCR model ships with integer-quantized LSTM weights. A dedicated UI detector is planned.',
   },
   {
-    name: 'Snapdragon NPU',
-    status: 'Adapter built',
-    what: 'The Windows host bridge and runtime probe are built. NPU execution arrives with the native host.',
+    name: 'Windows host bridge',
+    what: 'The bridge and runtime probe are built. The app reports NPU use only when the host confirms it.',
+  },
+];
+
+/** Ships with the SafeScreen Windows host. Not used by this build. */
+export const TECH_ROADMAP: TechItem[] = [
+  {
+    name: 'ONNX Runtime with QNN',
+    what: 'Loads the models and selects the QNN execution provider when a Snapdragon NPU is present.',
   },
   {
-    name: 'ONNX Runtime',
-    status: 'Planned integration',
-    what: 'The native host loads models with ONNX Runtime and selects the QNN execution provider when an NPU is present.',
-  },
-  {
-    name: 'Windows AI / Windows ML',
-    status: 'Planned integration',
-    what: 'Windows ML as an alternative path to the NPU, managed by the OS, for devices where it is preferred.',
+    name: 'Windows ML',
+    what: 'An OS-managed path to the NPU, for devices where it is preferred.',
   },
   {
     name: 'Qualcomm AI Hub',
-    status: 'Planned integration',
-    what: 'Used to compile, quantize and profile the OCR and UI models for Snapdragon X Series before shipping.',
+    what: 'Compiles, quantizes and profiles the OCR and UI models for Snapdragon X Series before release.',
   },
 ];

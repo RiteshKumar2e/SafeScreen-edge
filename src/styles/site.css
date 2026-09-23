@@ -982,6 +982,21 @@
   background: var(--accent-soft);
 }
 
+.stack-status {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.stack li.hw .stack-status {
+  color: var(--accent);
+}
+
+.stack-status.is-built {
+  color: var(--local);
+}
+
 .tech-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1607,6 +1622,26 @@
 
 .rows-tight dd {
   font-size: 14.5px;
+}
+
+.tech-groups {
+  display: grid;
+  gap: 36px;
+}
+
+.tech-group-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+
+.tech-group-note {
+  font-size: 14px;
+  color: var(--text-2);
+  margin-bottom: 4px;
 }
 
 /* ---------- How it works ---------- */

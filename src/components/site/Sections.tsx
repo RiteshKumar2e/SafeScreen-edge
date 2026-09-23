@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getScenario } from '../../demo/scenarios';
 import { scenarioReport } from '../../demo/scenarioReport';
-import { TECH } from '../../runtime/plan';
+import { TECH_BUILT, TECH_ROADMAP } from '../../runtime/plan';
 import { useStore } from '../../store/store';
 import { Icon, type IconName } from '../Icon';
 import { Pipeline, STAGES } from '../Pipeline';
@@ -377,21 +377,35 @@ export function TechStack() {
         {STACK.map((x) => (
           <li key={x.label} className={x.hw ? 'hw' : ''}>
             <span>{x.label}</span>
-            <span className={`chip ${/built|Built/.test(x.status) ? 'chip-local' : x.hw ? 'chip-accent' : ''}`}>{x.status}</span>
+            <span className={`stack-status${/built/i.test(x.status) ? ' is-built' : ''}`}>{x.status}</span>
           </li>
         ))}
       </ol>
-      <dl className="rows rows-tight">
-        {TECH.map((t) => (
-          <div key={t.name}>
-            <dt>
-              {t.name}
-              <span className={`chip ${t.status === 'In this build' ? 'chip-local' : t.status === 'Adapter built' ? 'chip-accent' : ''}`}>{t.status}</span>
-            </dt>
-            <dd>{t.what}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="tech-groups">
+        <section aria-labelledby="tech-built">
+          <h3 id="tech-built" className="tech-group-title">In this build</h3>
+          <dl className="rows rows-tight">
+            {TECH_BUILT.map((t) => (
+              <div key={t.name}>
+                <dt>{t.name}</dt>
+                <dd>{t.what}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+        <section aria-labelledby="tech-roadmap">
+          <h3 id="tech-roadmap" className="tech-group-title">Snapdragon roadmap</h3>
+          <p className="tech-group-note">Ships with the SafeScreen Windows host. Not used by this web build yet.</p>
+          <dl className="rows rows-tight">
+            {TECH_ROADMAP.map((t) => (
+              <div key={t.name}>
+                <dt>{t.name}</dt>
+                <dd>{t.what}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      </div>
     </div>
   );
 }

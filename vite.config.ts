@@ -32,9 +32,31 @@ function csp(cloudEndpoint: string | undefined): Plugin {
   };
 }
 
+/**
+ * Social previews need absolute URLs. When VITE_SITE_URL is set (for example
+ * https://safescreen.example), og:image becomes absolute and og:url is
+ * added. Without it the relative image path is kept.
+ */
+function siteUrl(url: string | undefined): Plugin {
+  return {
+    name: 'safescreen-site-url',
+    transformIndexHtml: (html) => {
+      if (!url) return html;
+      const base = url.replace(/\/+$/, '');
+      return html
+        .replace('content="/og.png"', `content="${base}/og.png"`)
+        .replace(
+          '<meta name="twitter:card"',
+          `<meta property="og:url" content="${base}/" />
+    <meta name="twitter:card"`,
+        );
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   return {
-    plugins: [react(), csp(env.VITE_CLOUD_DEMO_ENDPOINT)],
+    plugins: [react(), csp(env.VITE_CLOUD_DEMO_ENDPOINT), siteUrl(env.VITE_SITE_URL)],
   };
 });

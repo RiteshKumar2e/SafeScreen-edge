@@ -39,6 +39,7 @@ See `docs/architecture.md`, `docs/privacy.md` and `docs/snapdragon.md`.
 - `VITE_CLOUD_DEMO_ENDPOINT` enables cloud fallback (off by default, asks per frame, blocked by local-only mode).
 - `VITE_CONTACT_EMAIL` contact address on About, Privacy and Terms (shown as a draft until set).
 - `VITE_GITHUB_URL` shows a GitHub link in the footer.
+- `VITE_SITE_URL` public site address; makes the social preview image URL absolute and adds `og:url`.
 
 ## Honest status
 
